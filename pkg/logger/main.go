@@ -83,7 +83,7 @@ func LogInfoF(format string, args ...interface{}) {
 }
 
 func LogError(err error) {
-	colorizeAndLogF(os.Stderr, colorizeWarning, "%s\n", err)
+	logBase(os.Stderr, colorizeBaseF(colorizeWarning, "%s\n", err))
 }
 
 func LogWarning(msg string) {
