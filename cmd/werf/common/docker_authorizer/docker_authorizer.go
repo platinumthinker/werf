@@ -7,6 +7,7 @@ import (
 
 	"github.com/flant/werf/pkg/docker"
 	"github.com/flant/werf/pkg/docker_registry"
+	"github.com/flant/werf/pkg/logger"
 )
 
 type DockerCredentials struct {
@@ -22,14 +23,22 @@ type DockerAuthorizer struct {
 	PushCredentials *DockerCredentials
 }
 
-func (a *DockerAuthorizer) LoginForPull(repo string) error {
-	fmt.Printf("# Login into docker repo %s for pull\n", repo)
-	return a.login(a.PullCredentials, repo)
+func (a *DockerAuthorizer) LoginForPull(repo string) (err error) {
+	logger.LogServiceProcess(fmt.Sprintf("Login into docker repo '%s' for pull", repo), "", func() error {
+		err = a.login(a.PullCredentials, repo)
+		return err
+	})
+
+	return
 }
 
-func (a *DockerAuthorizer) LoginForPush(repo string) error {
-	fmt.Printf("# Login into docker repo %s for push\n", repo)
-	return a.login(a.PushCredentials, repo)
+func (a *DockerAuthorizer) LoginForPush(repo string) (err error) {
+	logger.LogServiceProcess(fmt.Sprintf("Login into docker repo '%s' for push", repo), "", func() error {
+		err = a.login(a.PushCredentials, repo)
+		return err
+	})
+
+	return
 }
 
 func (a *DockerAuthorizer) Login(repo string) error {
@@ -134,7 +143,7 @@ func getDockerAuthorizer(projectTmpDir string, credentials, pullCredentials, pus
 				return nil, fmt.Errorf("error creating tmp dir %s for docker config: %s", tmpDockerConfigDir, err)
 			}
 
-			fmt.Printf("Using tmp docker config at %s\n", tmpDockerConfigDir)
+			logger.LogInfoF("Using tmp docker config at %s\n", tmpDockerConfigDir)
 
 			a.HostDockerConfigDir = tmpDockerConfigDir
 		} else {

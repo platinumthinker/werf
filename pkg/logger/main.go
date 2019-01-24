@@ -55,7 +55,7 @@ func LogStep(msg string) {
 }
 
 func LogStepF(format string, args ...interface{}) {
-	colorizeLogBaseF(os.Stdout, colorizeStep, format, args...)
+	colorizeAndLogF(os.Stdout, colorizeStep, format, args...)
 }
 
 func LogService(msg string) {
@@ -63,7 +63,7 @@ func LogService(msg string) {
 }
 
 func LogServiceF(format string, args ...interface{}) {
-	colorizeLogBaseF(os.Stdout, colorizeService, format, args...)
+	colorizeAndLogF(os.Stdout, colorizeService, format, args...)
 }
 
 func LogInfo(msg string) {
@@ -71,7 +71,11 @@ func LogInfo(msg string) {
 }
 
 func LogInfoF(format string, args ...interface{}) {
-	colorizeLogBaseF(os.Stdout, colorizeInfo, format, args...)
+	colorizeAndLogF(os.Stdout, colorizeInfo, format, args...)
+}
+
+func LogError(err error) {
+	colorizeAndLogF(os.Stderr, colorizeWarning, "%s\n", err)
 }
 
 func LogWarning(msg string) {
@@ -79,10 +83,14 @@ func LogWarning(msg string) {
 }
 
 func LogWarningF(format string, args ...interface{}) {
-	colorizeLogBaseF(os.Stderr, colorizeWarning, format, args...)
+	colorizeAndLogF(os.Stderr, colorizeWarning, format, args...)
 }
 
-func colorizeLogBaseF(w io.Writer, colorizeFunc func(string) string, format string, args ...interface{}) {
+func colorizeAndLogF(w io.Writer, colorizeFunc func(string) string, format string, args ...interface{}) {
+	logF(w, colorizeBaseF(colorizeFunc, format, args...))
+}
+
+func colorizeBaseF(colorizeFunc func(string) string, format string, args ...interface{}) string {
 	var colorizeLines []string
 	lines := strings.Split(fmt.Sprintf(format, args...), "\n")
 	for _, line := range lines {
@@ -93,7 +101,7 @@ func colorizeLogBaseF(w io.Writer, colorizeFunc func(string) string, format stri
 		}
 	}
 
-	logF(w, strings.Join(colorizeLines, "\n"))
+	return strings.Join(colorizeLines, "\n")
 }
 
 func log(w io.Writer, msg string) {
@@ -144,7 +152,7 @@ func indentDown() {
 
 func logProcessInlineBase(processMsg string, processFunc func() error, colorizeProcessMsgFunc, colorizeSuccessFunc func(string) string) error {
 	processMsg = fmt.Sprintf(logProcessInlineProcessMsgFormat, processMsg)
-	colorizeLogBaseF(os.Stdout, colorizeProcessMsgFunc, "%s", processMsg)
+	colorizeAndLogF(os.Stdout, colorizeProcessMsgFunc, "%s", processMsg)
 
 	resultStatus := logProcessSuccessStatus
 	resultColorize := colorizeSuccessFunc
