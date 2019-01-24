@@ -161,10 +161,10 @@ func generateStages(imageConfig config.ImageInterface, c *Conveyor) ([]stage.Int
 	for _, gitPath := range gitPaths {
 		commit, err := gitPath.LatestCommit()
 		if err != nil {
-			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().String(), err)
+			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
 		}
 
-		fmt.Printf("Using commit '%s' of repo '%s'\n", commit, gitPath.GitRepo().String())
+		logger.LogInfoF("Using commit %s of git repo %s\n", commit, gitPath.GitRepo().GetName())
 	}
 
 	// from

@@ -70,7 +70,7 @@ func (gp *GitPath) GitRepo() git_repo.GitRepo {
 }
 
 func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Archive, err error) {
-	logger.LogProcess(fmt.Sprintf("Create archive commit %s of git repo %s", opts.Commit, gp.GitRepo().GetName()), "", func() error {
+	logger.LogProcess(fmt.Sprintf("Create archive for commit %s of git repo %s", opts.Commit, gp.GitRepo().GetName()), "", func() error {
 		logger.LogInfoF("Base path %s\n", opts.BasePath)
 
 		res, err = gp.GitRepo().CreateArchive(opts)
@@ -82,9 +82,7 @@ func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Arc
 }
 
 func (gp *GitPath) createPatch(opts git_repo.PatchOptions) (res git_repo.Patch, err error) {
-	logger.LogProcess(fmt.Sprintf("Create patch %s..%s for git repo %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName()), "", func() error {
-		logger.LogInfoF("Base path %s\n", opts.BasePath)
-
+	logger.LogProcessInline(fmt.Sprintf("Create patch %s..%s for git repo %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName()), func() error {
 		res, err = gp.GitRepo().CreatePatch(opts)
 
 		return err
