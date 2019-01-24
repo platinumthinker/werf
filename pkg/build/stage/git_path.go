@@ -70,7 +70,7 @@ func (gp *GitPath) GitRepo() git_repo.GitRepo {
 }
 
 func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Archive, err error) {
-	logger.LogProcess(fmt.Sprintf("Archive commit %s of git repo %s", opts.Commit, gp.GitRepo().GetName()), "", func() error {
+	logger.LogProcess(fmt.Sprintf("Create archive commit %s of git repo %s", opts.Commit, gp.GitRepo().GetName()), "", func() error {
 		logger.LogInfoF("Base path %s\n", opts.BasePath)
 
 		res, err = gp.GitRepo().CreateArchive(opts)
@@ -111,7 +111,7 @@ func (gp *GitPath) IsLocal() bool {
 
 func (gp *GitPath) LatestCommit() (string, error) {
 	if gp.Commit != "" {
-		fmt.Printf("Using specified commit `%s` of repository `%s`\n", gp.Commit, gp.GitRepo().String())
+		logger.LogInfoF("Using specified commit %s of git repo %s\n", gp.Commit, gp.GitRepo().GetName())
 		return gp.Commit, nil
 	}
 
