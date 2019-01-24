@@ -26,6 +26,14 @@ var (
 	indent = 0
 )
 
+func WithLogIndent(f func() error) error {
+	indentUp()
+	err := f()
+	indentDown()
+
+	return err
+}
+
 func LogProcessInline(msg string, processFunc func() error) error {
 	return logProcessInlineBase(msg, processFunc, colorizeStep, colorizeSuccess)
 }
@@ -130,14 +138,6 @@ func logIndent() string {
 	return strings.Repeat("  ", indent)
 }
 
-func withLogIndent(f func() error) error {
-	indentUp()
-	err := f()
-	indentDown()
-
-	return err
-}
-
 func indentUp() {
 	indent += 1
 }
@@ -158,7 +158,7 @@ func logProcessInlineBase(processMsg string, processFunc func() error, colorizeP
 	resultColorize := colorizeSuccessFunc
 	start := time.Now()
 
-	err := withLogIndent(processFunc)
+	err := WithLogIndent(processFunc)
 	if err != nil {
 		resultStatus = logProcessFailedStatus
 		resultColorize = colorizeFail
@@ -182,7 +182,7 @@ func logProcessBase(msg, processMsg string, processFunc func() error, colorizeMs
 	start := time.Now()
 	resultStatus := logProcessSuccessStatus
 
-	err := withLogIndent(processFunc)
+	err := WithLogIndent(processFunc)
 
 	elapsedSeconds := fmt.Sprintf(logProcessTimeFormat, time.Since(start).Seconds())
 
@@ -194,6 +194,7 @@ func logProcessBase(msg, processMsg string, processFunc func() error, colorizeMs
 	}
 
 	logStateBase(msg, resultStatus, elapsedSeconds, colorizeMsgFunc, colorizeSuccessFunc)
+	log(os.Stdout, "")
 
 	return nil
 }

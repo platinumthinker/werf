@@ -5,6 +5,7 @@ import (
 
 	"github.com/flant/werf/pkg/build/stage"
 	imagePkg "github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/logger"
 	"github.com/flant/werf/pkg/util"
 )
 
@@ -21,7 +22,16 @@ func NewSignaturesPhase() *SignaturesPhase {
 
 type SignaturesPhase struct{}
 
-func (p *SignaturesPhase) Run(c *Conveyor) error {
+func (p *SignaturesPhase) Run(c *Conveyor) (err error) {
+	logger.LogProcessInline("Calculate signatures", func() error {
+		err = p.run(c)
+		return err
+	})
+
+	return
+}
+
+func (p *SignaturesPhase) run(c *Conveyor) error {
 	if debug() {
 		fmt.Printf("SignaturesPhase.Run\n")
 	}
@@ -86,12 +96,6 @@ func (p *SignaturesPhase) Run(c *Conveyor) error {
 
 			if err = s.AfterImageSyncDockerStateHook(c); err != nil {
 				return err
-			}
-
-			if image.GetName() == "" {
-				fmt.Printf("# Calculated signature %s for image %s\n", stageSig, fmt.Sprintf("stage/%s", s.Name()))
-			} else {
-				fmt.Printf("# Calculated signature %s for image/%s %s\n", stageSig, image.GetName(), fmt.Sprintf("stage/%s", s.Name()))
 			}
 
 			newStagesList = append(newStagesList, s)

@@ -1,5 +1,7 @@
 package image
 
+import "github.com/docker/docker/api/types"
+
 type BuildOptions struct {
 	IntrospectBeforeError bool
 	IntrospectAfterError  bool
@@ -7,6 +9,7 @@ type BuildOptions struct {
 
 type ImageInterface interface {
 	Name() string
+	Inspect() *types.ImageInspect
 	Labels() map[string]string
 	ID() string
 

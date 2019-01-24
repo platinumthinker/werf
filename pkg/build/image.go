@@ -60,7 +60,7 @@ func (d *Image) GetBaseImage() *image.StageImage {
 	return d.baseImage
 }
 
-func (d *Image) PrepareBaseImage(c *Conveyor) error {
+func (d *Image) PrepareBaseImage(c *Conveyor) (err error) {
 	fromImage := d.stages[0].GetImage()
 
 	if fromImage.IsExists() {
@@ -79,25 +79,23 @@ func (d *Image) PrepareBaseImage(c *Conveyor) error {
 		}
 	}
 
-	if d.GetName() == "" {
-		fmt.Printf("# Pulling base image for image\n")
-	} else {
-		fmt.Printf("# Pulling base image for image/%s\n", d.GetName())
-	}
-
-	if d.baseImage.IsExists() {
-		err := d.baseImage.Pull()
-		if err != nil {
-			logger.LogWarningF("WARNING: cannot pull base image %s: %s\n", d.baseImage.Name(), err)
-			logger.LogWarningF("WARNING: using existing image %s without pull\n", d.baseImage.Name())
+	logger.LogServiceProcess("Pull base image", "", func() error {
+		if d.baseImage.IsExists() {
+			err = d.baseImage.Pull()
+			if err != nil {
+				logger.LogWarningF("WARNING: cannot pull base image %s: %s\n", d.baseImage.Name(), err)
+				logger.LogWarningF("WARNING: using existing image %s without pull\n", d.baseImage.Name())
+			}
+			return nil
 		}
-		return nil
-	}
 
-	err := d.baseImage.Pull()
-	if err != nil {
-		return fmt.Errorf("image %s pull failed: %s", d.baseImage.Name(), err)
-	}
+		err = d.baseImage.Pull()
+		if err != nil {
+			return fmt.Errorf("image %s pull failed: %s", d.baseImage.Name(), err)
+		}
+
+		return nil
+	})
 
 	return nil
 }

@@ -24,6 +24,10 @@ func NewStageImage(fromImage *StageImage, name string) *StageImage {
 	return stage
 }
 
+func (i *StageImage) Inspect() *types.ImageInspect {
+	return i.inspect
+}
+
 func (i *StageImage) Labels() map[string]string {
 	if i.inspect != nil {
 		return i.inspect.Config.Labels

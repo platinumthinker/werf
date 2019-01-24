@@ -20,7 +20,11 @@ func NewInitializationPhase() *InitializationPhase {
 	return &InitializationPhase{}
 }
 
-func (p *InitializationPhase) Run(c *Conveyor) error {
+func (p *InitializationPhase) Run(c *Conveyor) (err error) {
+	return p.run(c)
+}
+
+func (p *InitializationPhase) run(c *Conveyor) error {
 	imagesInOrder, err := generateImagesInOrder(c.werfConfig.Images, c)
 	if err != nil {
 		return err
@@ -31,30 +35,43 @@ func (p *InitializationPhase) Run(c *Conveyor) error {
 	return nil
 }
 
-func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image, error) {
-	var images []*Image
+func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) (images []*Image, err error) {
 	for _, imageConfig := range getImageConfigsInOrder(imageConfigs, c) {
-		image := &Image{}
+		logger.LogProcess("Initialize image_name", "", func() error {
+			var image *Image
+			image, err = generateImage(imageConfig, c)
+			if err != nil {
+				return err
+			}
 
-		imageBaseConfig, imageName, imageArtifact := processImageConfig(imageConfig)
-		from, fromImageName := getFromAndFromImageName(imageBaseConfig)
+			images = append(images, image)
 
-		image.name = imageName
-		image.baseImageName = from
-		image.baseImageImageName = fromImageName
-		image.isArtifact = imageArtifact
-
-		stages, err := generateStages(imageConfig, c)
-		if err != nil {
-			return nil, err
-		}
-
-		image.SetStages(stages)
-
-		images = append(images, image)
+			return nil
+		})
 	}
 
 	return images, nil
+}
+
+func generateImage(imageConfig config.ImageInterface, c *Conveyor) (*Image, error) {
+	image := &Image{}
+
+	imageBaseConfig, imageName, imageArtifact := processImageConfig(imageConfig)
+	from, fromImageName := getFromAndFromImageName(imageBaseConfig)
+
+	image.name = imageName
+	image.baseImageName = from
+	image.baseImageImageName = fromImageName
+	image.isArtifact = imageArtifact
+
+	stages, err := generateStages(imageConfig, c)
+	if err != nil {
+		return nil, err
+	}
+
+	image.SetStages(stages)
+
+	return image, nil
 }
 
 func getFromAndFromImageName(imageBaseConfig *config.ImageBase) (string, string) {
