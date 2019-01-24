@@ -69,6 +69,30 @@ func (gp *GitPath) GitRepo() git_repo.GitRepo {
 	panic("GitRepo not initialized")
 }
 
+func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Archive, err error) {
+	logger.LogProcess(fmt.Sprintf("Archive commit %s of git repo %s", opts.Commit, gp.GitRepo().GetName()), "", func() error {
+		logger.LogInfoF("Base path %s\n", opts.BasePath)
+
+		res, err = gp.GitRepo().CreateArchive(opts)
+
+		return err
+	})
+
+	return
+}
+
+func (gp *GitPath) createPatch(opts git_repo.PatchOptions) (res git_repo.Patch, err error) {
+	logger.LogProcess(fmt.Sprintf("Create patch %s..%s for git repo %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName()), "", func() error {
+		logger.LogInfoF("Base path %s\n", opts.BasePath)
+
+		res, err = gp.GitRepo().CreatePatch(opts)
+
+		return err
+	})
+
+	return
+}
+
 func (gp *GitPath) getRepoFilterOptions() git_repo.FilterOptions {
 	return git_repo.FilterOptions{
 		BasePath:     gp.RepoPath,
@@ -198,7 +222,8 @@ func (gp *GitPath) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltI
 		FromCommit:    fromCommit,
 		ToCommit:      toCommit,
 	}
-	patch, err := gp.GitRepo().CreatePatch(patchOpts)
+
+	patch, err := gp.createPatch(patchOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +260,8 @@ func (gp *GitPath) baseApplyPatchCommand(fromCommit, toCommit string, prevBuiltI
 			FilterOptions: gp.getRepoFilterOptions(),
 			Commit:        toCommit,
 		}
-		archive, err := gp.GitRepo().CreateArchive(archiveOpts)
+
+		archive, err := gp.createArchive(archiveOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -323,7 +349,7 @@ func (gp *GitPath) baseApplyArchiveCommand(commit string, image image.ImageInter
 		FilterOptions: gp.getRepoFilterOptions(),
 		Commit:        commit,
 	}
-	archive, err := gp.GitRepo().CreateArchive(archiveOpts)
+	archive, err := gp.createArchive(archiveOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -392,7 +418,8 @@ func (gp *GitPath) PatchSize(fromCommit string) (int64, error) {
 		WithEntireFileContext: true,
 		WithBinary:            true,
 	}
-	patch, err := gp.GitRepo().CreatePatch(patchOpts)
+
+	patch, err := gp.createPatch(patchOpts)
 	if err != nil {
 		return 0, err
 	}
@@ -459,7 +486,8 @@ func (gp *GitPath) baseIsPatchEmpty(fromCommit, toCommit string) (bool, error) {
 		FromCommit:    fromCommit,
 		ToCommit:      toCommit,
 	}
-	patch, err := gp.GitRepo().CreatePatch(patchOpts)
+
+	patch, err := gp.createPatch(patchOpts)
 	if err != nil {
 		return false, err
 	}
@@ -478,7 +506,8 @@ func (gp *GitPath) IsEmpty() (bool, error) {
 		FilterOptions: gp.getRepoFilterOptions(),
 		Commit:        commit,
 	}
-	archive, err := gp.GitRepo().CreateArchive(archiveOpts)
+
+	archive, err := gp.createArchive(archiveOpts)
 	if err != nil {
 		return false, err
 	}
