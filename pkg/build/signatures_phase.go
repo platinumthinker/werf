@@ -60,7 +60,7 @@ func (p *SignaturesPhase) calculateImageSignatures(c *Conveyor, image *Image) er
 			return fmt.Errorf("error checking stage %s is empty: %s", s.Name(), err)
 		}
 		if isEmpty {
-			logger.LogInfoF("%20s: -\n", s.Name())
+			logger.LogInfoF("%20s: <empty>\n", s.Name())
 			continue
 		}
 

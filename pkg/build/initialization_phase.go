@@ -39,7 +39,7 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 	var images []*Image
 
 	for _, imageConfig := range getImageConfigsInOrder(imageConfigs, c) {
-		err := logger.LogServiceProcess("Constructing stages for image image_name", "", func() error {
+		err := logger.LogServiceProcess("Determining stages for image image_name", "", func() error {
 			image, err := generateImage(imageConfig, c)
 			if err != nil {
 				return err

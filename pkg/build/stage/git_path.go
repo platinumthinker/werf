@@ -85,7 +85,12 @@ func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Arc
 }
 
 func (gp *GitPath) createPatch(opts git_repo.PatchOptions) (res git_repo.Patch, err error) {
-	logger.LogServiceProcessInline(fmt.Sprintf("Create patch %s..%s for git repo %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName()), func() error {
+	cwd := gp.Cwd
+	if cwd == "" {
+		cwd = "/"
+	}
+
+	logger.LogServiceProcessInline(fmt.Sprintf("Create patch %s..%s for %s git path %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName(), cwd), func() error {
 		res, err = gp.GitRepo().CreatePatch(opts)
 
 		return err
