@@ -70,7 +70,7 @@ func (gp *GitPath) GitRepo() git_repo.GitRepo {
 }
 
 func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Archive, err error) {
-	logger.LogProcess(fmt.Sprintf("Create archive for commit %s of git repo %s", opts.Commit, gp.GitRepo().GetName()), "", func() error {
+	logger.LogServiceProcess(fmt.Sprintf("Create archive for commit %s of git repo %s", opts.Commit, gp.GitRepo().GetName()), "", func() error {
 		logger.LogInfoF("Base path %s\n", opts.BasePath)
 
 		res, err = gp.GitRepo().CreateArchive(opts)
@@ -82,7 +82,7 @@ func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Arc
 }
 
 func (gp *GitPath) createPatch(opts git_repo.PatchOptions) (res git_repo.Patch, err error) {
-	logger.LogProcessInline(fmt.Sprintf("Create patch %s..%s for git repo %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName()), func() error {
+	logger.LogServiceProcessInline(fmt.Sprintf("Create patch %s..%s for git repo %s", opts.FromCommit, opts.ToCommit, gp.GitRepo().GetName()), func() error {
 		res, err = gp.GitRepo().CreatePatch(opts)
 
 		return err
@@ -109,7 +109,6 @@ func (gp *GitPath) IsLocal() bool {
 
 func (gp *GitPath) LatestCommit() (string, error) {
 	if gp.Commit != "" {
-		logger.LogInfoF("Using specified commit %s of git repo %s\n", gp.Commit, gp.GitRepo().GetName())
 		return gp.Commit, nil
 	}
 
@@ -397,7 +396,7 @@ func (gp *GitPath) StageDependenciesChecksum(stageName StageName) (string, error
 	}
 
 	for _, path := range checksum.GetNoMatchPaths() {
-		logger.LogWarningF("WARNING: stage `%s` dependency path `%s` have not been found in repo `%s`\n", stageName, path, gp.GitRepo().String())
+		logger.LogWarningF("WARNING: stage %s dependency path %s have not been found in %s git\n", stageName, path, gp.GitRepo().GetName())
 	}
 
 	return checksum.String(), nil

@@ -23,7 +23,7 @@ func NewSignaturesPhase() *SignaturesPhase {
 type SignaturesPhase struct{}
 
 func (p *SignaturesPhase) Run(c *Conveyor) (err error) {
-	logger.LogProcessInline("Calculate signatures", func() error {
+	logger.LogProcess("Calculate signatures", "", func() error {
 		err = p.run(c)
 		return err
 	})
@@ -54,6 +54,8 @@ func (p *SignaturesPhase) run(c *Conveyor) error {
 
 		var newStagesList []stage.Interface
 
+		// FIXME: block dimg name
+
 		for _, s := range image.GetStages() {
 			if prevImage.IsExists() {
 				prevBuiltImage = prevImage
@@ -64,6 +66,7 @@ func (p *SignaturesPhase) run(c *Conveyor) error {
 				return fmt.Errorf("error checking stage %s is empty: %s", s.Name(), err)
 			}
 			if isEmpty {
+				logger.LogInfoF("Ignore empty stage %s\n", s.Name())
 				continue
 			}
 
@@ -87,6 +90,7 @@ func (p *SignaturesPhase) run(c *Conveyor) error {
 			s.SetSignature(stageSig)
 
 			imageName := fmt.Sprintf(LocalImageStageImageFormat, c.projectName(), stageSig)
+			logger.LogInfoF("%s/%s image name %s\n", image.GetName(), s.Name(), imageName)
 			i := c.GetOrCreateImage(prevImage, imageName)
 			s.SetImage(i)
 
@@ -105,6 +109,8 @@ func (p *SignaturesPhase) run(c *Conveyor) error {
 		}
 
 		image.SetStages(newStagesList)
+
+		fmt.Println() // FIXME
 	}
 
 	return nil

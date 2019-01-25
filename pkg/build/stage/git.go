@@ -2,6 +2,7 @@ package stage
 
 import (
 	"github.com/flant/werf/pkg/image"
+	"github.com/flant/werf/pkg/logger"
 )
 
 func newGitStage(name StageName, baseStageOptions *NewBaseStageOptions) *GitStage {
@@ -36,6 +37,8 @@ func (s *GitStage) AfterImageSyncDockerStateHook(c Conveyor) error {
 		stageName := c.GetBuildingGitStage(s.imageName)
 		if stageName == "" {
 			c.SetBuildingGitStage(s.imageName, s.Name())
+
+			logger.LogInfoF("Git files will be actualized on the stage %s\n", s.Name())
 		}
 	}
 

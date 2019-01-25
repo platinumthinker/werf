@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/flant/werf/pkg/lock"
+	"github.com/flant/werf/pkg/logger"
 )
 
 func NewRenewPhase() *RenewPhase {
@@ -13,7 +14,16 @@ func NewRenewPhase() *RenewPhase {
 
 type RenewPhase struct{}
 
-func (p *RenewPhase) Run(c *Conveyor) error {
+func (p *RenewPhase) Run(c *Conveyor) (err error) {
+	logger.LogProcess("Check invalid images", "", func() error {
+		err = p.run(c)
+		return err
+	})
+
+	return
+}
+
+func (p *RenewPhase) run(c *Conveyor) error {
 	if debug() {
 		fmt.Printf("RenewPhase.Run\n")
 	}
@@ -63,11 +73,7 @@ func (p *RenewPhase) Run(c *Conveyor) error {
 				} else if stageShouldBeReset {
 					conveyorShouldBeReset = true
 
-					if image.GetName() == "" {
-						fmt.Printf("# Reseting image %s for image %s\n", img.Name(), fmt.Sprintf("stage/%s", s.Name()))
-					} else {
-						fmt.Printf("# Reseting image %s for image/%s %s\n", img.Name(), image.GetName(), fmt.Sprintf("stage/%s", s.Name()))
-					}
+					logger.LogServiceF("Untag %s for %s/%s\n", img.Name(), image.GetName(), s.Name())
 
 					if err := img.Untag(); err != nil {
 						return err

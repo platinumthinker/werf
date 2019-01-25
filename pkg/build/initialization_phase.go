@@ -35,11 +35,12 @@ func (p *InitializationPhase) run(c *Conveyor) error {
 	return nil
 }
 
-func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) (images []*Image, err error) {
+func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image, error) {
+	var images []*Image
+
 	for _, imageConfig := range getImageConfigsInOrder(imageConfigs, c) {
-		logger.LogProcess("Initialize image_name", "", func() error {
-			var image *Image
-			image, err = generateImage(imageConfig, c)
+		err := logger.LogProcess("Constructing stages for image image_name", "", func() error {
+			image, err := generateImage(imageConfig, c)
 			if err != nil {
 				return err
 			}
@@ -48,6 +49,10 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) (images []
 
 			return nil
 		})
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return images, nil
@@ -175,15 +180,6 @@ func generateStages(imageConfig config.ImageInterface, c *Conveyor) ([]stage.Int
 		return nil, err
 	}
 
-	for _, gitPath := range gitPaths {
-		commit, err := gitPath.LatestCommit()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
-		}
-
-		logger.LogInfoF("Using commit %s of git repo %s\n", commit, gitPath.GitRepo().GetName())
-	}
-
 	// from
 	stages = appendIfExist(stages, stage.GenerateFromStage(imageBaseConfig, baseStageOptions))
 
@@ -262,7 +258,9 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 				ClonePath: clonePath,
 			}
 
-			if err := remoteGitRepo.CloneAndFetch(); err != nil {
+			if err := logger.LogProcess(fmt.Sprintf("%s git\n", remoteGitPathConfig.Name), "[REFRESHING]", func() error {
+				return remoteGitRepo.CloneAndFetch()
+			}); err != nil {
 				return nil, err
 			}
 
@@ -272,11 +270,29 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 		gitPaths = append(gitPaths, gitRemoteArtifactInit(remoteGitPathConfig, remoteGitRepo, imageBaseConfig.Name, c))
 	}
 
+	// TODO:
+	// if err := logger.LogProcess(fmt.Sprintf("Checking git paths emptyness"), "", func() error {
+	// })
 	for _, gitPath := range gitPaths {
+		commit, err := gitPath.LatestCommit()
+		if err != nil {
+			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
+		}
+
+		cwd := gitPath.Cwd
+		if cwd == "" {
+			cwd = "/"
+		}
+
+		logger.LogInfoF("Checking commit %s emptyness of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
+
 		if empty, err := gitPath.IsEmpty(); err != nil {
 			return nil, err
 		} else if !empty {
+			logger.LogInfoF("Using non empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
 			nonEmptyGitPaths = append(nonEmptyGitPaths, gitPath)
+		} else {
+			logger.LogWarningF("Ignore empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
 		}
 	}
 
@@ -411,6 +427,7 @@ func processImageConfig(imageConfig config.ImageInterface) (*config.ImageBase, s
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
 	if !reflect.ValueOf(stage).IsNil() {
+		logger.LogInfoF("Created stage %s\n", stage.Name())
 		return append(stages, stage)
 	}
 

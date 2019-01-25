@@ -2,6 +2,7 @@ package build
 
 import (
 	"fmt"
+
 	"github.com/flant/werf/pkg/logger"
 
 	imagePkg "github.com/flant/werf/pkg/image"
@@ -17,7 +18,12 @@ type PrepareImagesPhase struct{}
 const WerfCacheVersionLabel = "werf-cache-version"
 
 func (p *PrepareImagesPhase) Run(c *Conveyor) (err error) {
-	return p.run(c)
+	logger.LogProcess("Prepare build instructions for images", "", func() error {
+		err = p.run(c)
+		return err
+	})
+
+	return
 }
 
 func (p *PrepareImagesPhase) run(c *Conveyor) (err error) {
@@ -26,13 +32,13 @@ func (p *PrepareImagesPhase) run(c *Conveyor) (err error) {
 	}
 
 	for _, image := range c.imagesInOrder {
-		logger.LogProcess(fmt.Sprintf("Prepare %s images", image.name), "", func() error {
-			if err = p.runImage(image, c); err != nil {
-				return err
-			}
+		// logger.LogProcess(fmt.Sprintf("Prepare %s image", image.name), "", func() error {
+		if err = p.runImage(image, c); err != nil {
+			return err
+		}
 
-			return nil
-		})
+		return nil
+		// })
 	}
 
 	return nil
