@@ -18,7 +18,7 @@ type PrepareImagesPhase struct{}
 const WerfCacheVersionLabel = "werf-cache-version"
 
 func (p *PrepareImagesPhase) Run(c *Conveyor) (err error) {
-	logger.LogProcess("Prepare build instructions for images", "", func() error {
+	logger.LogServiceProcess("Prepare build instructions for images", "", func() error {
 		err = p.run(c)
 		return err
 	})

@@ -70,9 +70,12 @@ func (gp *GitPath) GitRepo() git_repo.GitRepo {
 }
 
 func (gp *GitPath) createArchive(opts git_repo.ArchiveOptions) (res git_repo.Archive, err error) {
-	logger.LogServiceProcess(fmt.Sprintf("Create archive for commit %s of git repo %s", opts.Commit, gp.GitRepo().GetName()), "", func() error {
-		logger.LogInfoF("Base path %s\n", opts.BasePath)
+	cwd := gp.Cwd
+	if cwd == "" {
+		cwd = "/"
+	}
 
+	logger.LogServiceProcess(fmt.Sprintf("Create archive for commit %s of %s git path %s", opts.Commit, gp.GitRepo().GetName(), cwd), "", func() error {
 		res, err = gp.GitRepo().CreateArchive(opts)
 
 		return err

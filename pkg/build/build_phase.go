@@ -30,7 +30,7 @@ func (p *BuildPhase) run(c *Conveyor) (err error) {
 	}
 
 	for _, image := range c.imagesInOrder {
-		logger.LogProcess(fmt.Sprintf("Build %s images", image.name), "", func() error {
+		logger.LogServiceProcess(fmt.Sprintf("Build %s images", image.name), " ", func() error {
 			if err = p.runImage(image, c); err != nil {
 				return err
 			}

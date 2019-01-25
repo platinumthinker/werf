@@ -15,7 +15,7 @@ func NewRenewPhase() *RenewPhase {
 type RenewPhase struct{}
 
 func (p *RenewPhase) Run(c *Conveyor) (err error) {
-	logger.LogProcess("Check invalid images", "", func() error {
+	logger.LogServiceProcess("Check invalid images", "", func() error {
 		err = p.run(c)
 		return err
 	})

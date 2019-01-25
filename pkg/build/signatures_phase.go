@@ -23,7 +23,7 @@ func NewSignaturesPhase() *SignaturesPhase {
 type SignaturesPhase struct{}
 
 func (p *SignaturesPhase) Run(c *Conveyor) (err error) {
-	logger.LogProcess("Calculate signatures", "", func() error {
+	logger.LogServiceProcess("Calculate signatures", "", func() error {
 		err = p.run(c)
 		return err
 	})
