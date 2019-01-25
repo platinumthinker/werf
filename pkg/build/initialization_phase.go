@@ -39,7 +39,7 @@ func generateImagesInOrder(imageConfigs []*config.Image, c *Conveyor) ([]*Image,
 	var images []*Image
 
 	for _, imageConfig := range getImageConfigsInOrder(imageConfigs, c) {
-		err := logger.LogServiceProcess("Determining stages for image image_name", "", func() error {
+		err := logger.LogServiceProcess("Determine stages for image image_name", " ", func() error {
 			image, err := generateImage(imageConfig, c)
 			if err != nil {
 				return err
@@ -270,30 +270,37 @@ func generateGitPaths(imageBaseConfig *config.ImageBase, c *Conveyor) ([]*stage.
 		gitPaths = append(gitPaths, gitRemoteArtifactInit(remoteGitPathConfig, remoteGitRepo, imageBaseConfig.Name, c))
 	}
 
-	// TODO:
-	// if err := logger.LogProcess(fmt.Sprintf("Checking git paths emptyness"), "", func() error {
-	// })
-	for _, gitPath := range gitPaths {
-		commit, err := gitPath.LatestCommit()
-		if err != nil {
-			return nil, fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
+	if err := logger.LogServiceProcess(fmt.Sprintf("Check git paths"), " ", func() error {
+		for _, gitPath := range gitPaths {
+			commit, err := gitPath.LatestCommit()
+			if err != nil {
+				return fmt.Errorf("unable to get commit of repo '%s': %s", gitPath.GitRepo().GetName(), err)
+			}
+
+			cwd := gitPath.Cwd
+			if cwd == "" {
+				cwd = "/"
+			}
+
+			if empty, err := gitPath.IsEmpty(); err != nil {
+				return err
+			} else if !empty {
+				logger.LogInfoF("Using non empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
+				nonEmptyGitPaths = append(nonEmptyGitPaths, gitPath)
+			} else {
+				logger.LogWarningF("Ignore empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
+				for _, p := range gitPath.IncludePaths {
+					logger.LogWarningF("  include path: %s\n", p)
+				}
+				for _, p := range gitPath.ExcludePaths {
+					logger.LogWarningF("  exclude path: %s\n", p)
+				}
+			}
 		}
 
-		cwd := gitPath.Cwd
-		if cwd == "" {
-			cwd = "/"
-		}
-
-		logger.LogInfoF("Checking commit %s emptyness of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
-
-		if empty, err := gitPath.IsEmpty(); err != nil {
-			return nil, err
-		} else if !empty {
-			logger.LogInfoF("Using non empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
-			nonEmptyGitPaths = append(nonEmptyGitPaths, gitPath)
-		} else {
-			logger.LogWarningF("Ignore empty commit %s of %s git path %s to %s\n", commit, gitPath.GitRepo().GetName(), cwd, gitPath.To)
-		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return nonEmptyGitPaths, nil
@@ -427,7 +434,7 @@ func processImageConfig(imageConfig config.ImageInterface) (*config.ImageBase, s
 
 func appendIfExist(stages []stage.Interface, stage stage.Interface) []stage.Interface {
 	if !reflect.ValueOf(stage).IsNil() {
-		logger.LogInfoF("Created stage %s\n", stage.Name())
+		logger.LogInfoF("Using stage %s\n", stage.Name())
 		return append(stages, stage)
 	}
 
